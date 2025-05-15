@@ -1,15 +1,13 @@
 import Joi from 'joi';
 
-export const registerValidator = Joi.object({
+export const registerAuthorValidator = Joi.object({
   name: Joi.string().min(3).required(),
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
-  mobile: Joi.string().length(10).optional(),
-  altMobile: Joi.string().length(10).optional(),
-  age: Joi.number().optional(),
+  bio: Joi.string().optional(),
 });
 
-export const loginValidator = Joi.object({
+export const loginAuthorValidator = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
 });
