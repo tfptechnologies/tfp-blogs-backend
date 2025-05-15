@@ -9,6 +9,14 @@ const getAllusers = async ()=>{
 
 }
 
+const getUserById = async (id)=>{
+
+  let user = await userModel.getUserById(id)
+
+  return user;
+
+}
+
 
 const createUser = async (user)=>{
   console.log("Service");

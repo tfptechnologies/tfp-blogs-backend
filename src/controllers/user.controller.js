@@ -32,3 +32,14 @@ exports.createUser = async (req, res) => {
 exports.updateUser =async (req,res)=>{
 
 }
+
+exports.getUserById = async(req,res)=>{
+  try {
+    const userId = req.params.id;
+    let response = await userService.getUserById(userId);
+    res.send(response);
+  } catch (error) {
+    res.status(500).send({ msg: "Internal Server Error", error: error });
+  }
+
+}

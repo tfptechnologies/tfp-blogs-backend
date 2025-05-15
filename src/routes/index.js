@@ -1,7 +1,6 @@
 const express = require("express");
 const authRoutes = require("./auth.routes");
 const userRoutes = require("./user.routes");
-const productRoutes = require("./product.routes");
 
 const router = express.Router();
 
@@ -10,3 +9,5 @@ router.use("/user", userRoutes);
 
 
 module.exports = router;
+
+
