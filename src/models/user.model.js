@@ -25,7 +25,6 @@ const findUserById = async (id) => {
   return await prisma.user.findUnique({ where: { id } });
 };
 
-
 const getAllUsersList = async ()=>{
   return await prisma.user.findMany();
 }

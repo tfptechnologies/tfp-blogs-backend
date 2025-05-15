@@ -11,24 +11,43 @@ datasource db {
 }
 
 
-
 model User {
-  id         Int      @id @default(autoincrement())
-  name       String
-  age        Int?
-  email      String   @unique
+  id         Int       @id @default(autoincrement())
+  fullName   String
+  email      String    @unique
   password   String
-  mobile     String?
-  altMobile  String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  image      String?   // Profile picture
+  gender     String?
+  dob        DateTime?
+  phone      String?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Blog posts by this user
+  posts      Post[]
+  comments   Comment[]
+   replies    Comment[] @relation("CommentReplies")
+  likes      Int       @default(0)
+  dislikes   Int       @default(0)
 }
 
+model Comment {
+  id        Int       @id @default(autoincrement())
+  text      String
+  likes     Int       @default(0)
+  dislikes  Int       @default(0)
+  deleted   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-model Post {
-  id         Int      @id @default(autoincrement())
-  title      String
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  postId    Int
+  post      Post      @relation(fields: [postId], references: [id])
+
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+
+  parentId  Int?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
 }
