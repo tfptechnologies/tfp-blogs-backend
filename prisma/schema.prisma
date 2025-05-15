@@ -23,31 +23,87 @@ model User {
   isActive   Boolean   @default(true)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  deleted    DateTime  @deletedAt
+  occupation String
 
-  // Blog posts by this user
-  posts      Post[]
-  comments   Comment[]
-   replies    Comment[] @relation("CommentReplies")
+  
+}
+
+model Tag {
+  tagName String
+  id      Int
+  slug    String    @unique
+  isActive   Boolean   @default(true)
+
+}
+
+model Category {
+  name        String
+  id          Int
+  slug        String    @unique
+  isActive    Boolean   @default(true)
+
+}
+
+model Blog {
+  id             Int       @id @default(autoincrement())
+  title          String?
+  slug           String    @unique
+  content        String
+  image          String?
+  metaTitle      String?
+  metaDescription String?
+  canonicalUrl   String?
+  author         User      @relation(fields: [authorId], references: [id])
+  authorId       Int
+  postedAt       DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  isPublished    Boolean   @default(false)
+  isDeleted      Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  status         String    @default("draft") // e.g., draft, published, archived
+  readingTime    Int?      // estimated in minutes
+  excerpt        String?   // short summary or preview
+  comments       Comment[] // one-to-many with Comment 
+  
+  authorId       Int @unique
+  tagList        Tags[] // one-to-many with Tags
+  categoryList   Category[] // one-to-many with Category  
   likes      Int       @default(0)
   dislikes   Int       @default(0)
+  views      Int       @default(0)          
+ 
 }
 
 model Comment {
-  id        Int       @id @default(autoincrement())
-  text      String
-  likes     Int       @default(0)
-  dislikes  Int       @default(0)
-  deleted   Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  postId    Int
-  post      Post      @relation(fields: [postId], references: [id])
-
+  commentId          Int       @id @default(autoincrement())
+  blogId      Int       @unique
+  blog        Blog      @relation(fields: [blogId], references: [id])
+  content     String?
+  isActive    Boolean   @default(true)
+  deleted     Boolean   @default(false)
+  isApproved  Boolean
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   userId    Int
   user      User      @relation(fields: [userId], references: [id])
 
-  parentId  Int?
+  
+}
+
+model Subcomment {
+  commentId Int?
+  userId    Int?
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   replies   Comment[] @relation("CommentReplies")
+  isActive    Boolean   @default(true)
+  deleted     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isApproved  Boolean
+  isPublished Boolean   @default(false)
+  blogId      Int?
+
 }
+
+
