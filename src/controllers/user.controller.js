@@ -1,77 +1,86 @@
-import prisma from '../config/db.js';
-import bcrypt from 'bcryptjs';
-import generateToken from '../utils/generateToken.js';
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET;
 
-export const registerUser = async (req, res) => {
-  const { name, email, password, mobile, altMobile, age } = req.body;
+// Create
+exports.registerUser = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return res.status(400).json({ message: "Email exists" });
 
-  const userExists = await prisma.user.findUnique({ where: { email } });
-  if (userExists) return res.status(400).json({ message: 'User already exists' });
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const user = await prisma.user.create({
-    data: { name, email, password: hashedPassword, mobile, altMobile, age },
-  });
-
-  res.status(201).json({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    token: generateToken(user.id),
-  });
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { name, email, password: hashed, role },
+    });
+    res.status(201).json({ ...user, password: undefined });
+  } catch (err) {
+    res.status(500).json({ message: "Registration failed", error: err.message });
+  }
 };
 
-export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+// Login
+exports.loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ message: "Wrong password" });
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-
-  res.json({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    token: generateToken(user.id),
-  });
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1d" });
+    res.json({ token, user: { ...user, password: undefined } });
+  } catch (err) {
+    res.status(500).json({ message: "Login failed", error: err.message });
+  }
 };
 
-export const getUserProfile = async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-  if (!user) return res.status(404).json({ message: 'User not found' });
-
-  res.json({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    mobile: user.mobile,
-    altMobile: user.altMobile,
-    age: user.age,
+// Get All Users
+exports.getUsers = async (req, res) => {
+  const users = await prisma.user.findMany({
+    select: { id: true, name: true, email: true, role: true },
   });
+  res.json(users);
 };
 
-export const updateUserProfile = async (req, res) => {
-  const { name, email, mobile, altMobile, age } = req.body;
-
-  const user = await prisma.user.update({
-    where: { id: req.user.id },
-    data: { name, email, mobile, altMobile, age },
+// Get User by ID
+exports.getUserById = async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(req.params.id) },
+    select: { id: true, name: true, email: true, role: true },
   });
-
-  res.json({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    mobile: user.mobile,
-    altMobile: user.altMobile,
-    age: user.age,
-  });
+  if (!user) return res.status(404).json({ message: "User not found" });
+  res.json(user);
 };
 
-export const deleteUser = async (req, res) => {
-  await prisma.user.delete({ where: { id: req.params.id } });
-  res.json({ message: 'User deleted successfully' });
+// Update User
+exports.updateUser = async (req, res) => {
+  const { name, email, password, role } = req.body;
+  const data = { name, email, role };
+  if (password) {
+    data.password = await bcrypt.hash(password, 10);
+  }
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: parseInt(req.params.id) },
+      data,
+    });
+    res.json({ ...user, password: undefined });
+  } catch (err) {
+    res.status(404).json({ message: "User not found", error: err.message });
+  }
+};
+
+// Delete User
+exports.deleteUser = async (req, res) => {
+  try {
+    await prisma.user.delete({ where: { id: parseInt(req.params.id) } });
+    res.json({ message: "User deleted" });
+  } catch (err) {
+    res.status(404).json({ message: "User not found", error: err.message });
+  }
 };
