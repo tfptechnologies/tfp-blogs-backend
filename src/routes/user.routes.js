@@ -5,21 +5,31 @@ const {
   loginUser,
   getUserProfile,
   updateUserProfile,
-  getUsers,
+  getUserById,
   deleteUser,
-  refreshToken
-} = require('../controllers/user.Controller');
+  getAllUsers
+} = require('../controllers/user.controller');
 const protect = require('../middlewares/auth.middleware');
 const authorize = require('../middlewares/role.Check');
 
 
 // Routes
-router.post('/register', registerValidation, registerUser);
-router.post('/login', loginValidation, loginUser);
+// router.post('/register', registerValidation, registerUser);
+// router.post('/login', loginValidation, loginUser);
+
+// getUserById
+router.get('/:id', getUserById);
+
+// deleteUser b?
+router.delete('/:id', deleteUser);
+
 router.get('/profile', protect, getUserProfile);
-router.put('/profile', protect, updateUserProfile);
-router.get('/', protect, authorize('admin'), getUsers);
+router.put('/:id', protect, updateUserProfile);
+router.get('/', protect, authorize('admin'), getAllUsers);
 router.delete('/:id', protect, authorize('admin'), deleteUser);
+
+
+
 // router.post('/refresh-token', refreshToken);
 
 module.exports = router; 

@@ -1,212 +1,187 @@
-const { PrismaClient } = require('@prisma/client');
-const slugify = require('slugify');
-const asyncHandler = require('../utils/asyncHandler');
-
-const prisma = new PrismaClient();
+const blogService = require('../services/blog.service');
 
 // @desc    Create a new blog
-// @route   POST /api/blogs
-// @access  Private/Author
 const createBlog = async (req, res) => {
-    try {
-        const { title, content, category, tags, isPublished } = req.body;
-        const authorId = req.user.id;
+  try {
+    const blogData = {
+      ...req.body,
+      authorId: req.user.id,
+    };
 
-        const blog = await prisma.blog.create({
-            data: {
-                title,
-                content,
-                category,
-                tags,
-                isPublished,
-                authorId
-            }
-        });
-
-        res.status(201).json({
-            success: true,
-            message: 'Blog created successfully',
-            data: blog
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error creating blog',
-            error: error.message
-        });
+    // Validate required fields explicitly
+    if (!blogData.title || !blogData.content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: title and content are required',
+      });
     }
+
+    const blog = await blogService.createBlogService(blogData);
+
+    res.status(201).json({
+      success: true,
+      message: 'Blog created successfully',
+      data: blog,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error while creating blog',
+      error: error.message,
+    });
+  }
 };
 
-// @desc    Get all blogs
-// @route   GET /api/blogs
-// @access  Public
+// Get all blogs
 const getBlogs = async (req, res) => {
-    try {
-        const blogs = await prisma.blog.findMany({
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true
-                    }
-                }
-            }
-        });
+  try {
+    const blogs = await blogService.getAllBlogsService();
 
-        res.json({
-            success: true,
-            data: blogs
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching blogs',
-            error: error.message
-        });
+    if (!blogs || blogs.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No blogs found',
+      });
     }
+
+    res.status(200).json({
+      success: true,
+      data: blogs,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error fetching blogs',
+      error: error.message,
+    });
+  }
 };
 
-// @desc    Get single blog
-// @route   GET /api/blogs/:slug
-// @access  Public
+// Get a single blog by ID
 const getBlogById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const blog = await prisma.blog.findUnique({
-            where: { id },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true
-                    }
-                }
-            }
-        });
+  try {
+    const { id } = req.params;
 
-        if (!blog) {
-            return res.status(404).json({
-                success: false,
-                message: 'Blog not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            data: blog
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching blog',
-            error: error.message
-        });
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Blog ID is required',
+      });
     }
+
+    const blog = await blogService.getBlogByIdService(id);
+
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: 'Blog not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: blog,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error fetching blog',
+      error: error.message,
+    });
+  }
 };
 
-// @desc    Update blog
-// @route   PUT /api/blogs/:id
-// @access  Private/Author
+// Update a blog
 const updateBlog = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { title, content, category, tags, isPublished } = req.body;
-        const authorId = req.user.id;
+  try {
+    const { id } = req.params;
+    const authorId = req.user.id;
 
-        // Check if blog exists and belongs to user
-        const existingBlog = await prisma.blog.findUnique({
-            where: { id }
-        });
-
-        if (!existingBlog) {
-            return res.status(404).json({
-                success: false,
-                message: 'Blog not found'
-            });
-        }
-
-        if (existingBlog.authorId !== authorId) {
-            return res.status(403).json({
-                success: false,
-                message: 'Not authorized to update this blog'
-            });
-        }
-
-        const updatedBlog = await prisma.blog.update({
-            where: { id },
-            data: {
-                title,
-                content,
-                category,
-                tags,
-                isPublished
-            }
-        });
-
-        res.json({
-            success: true,
-            message: 'Blog updated successfully',
-            data: updatedBlog
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error updating blog',
-            error: error.message
-        });
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Blog ID is required',
+      });
     }
+
+    const blog = await blogService.getBlogByIdService(id);
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: 'Blog not found',
+      });
+    }
+
+    if (blog.authorId !== authorId) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to update this blog',
+      });
+    }
+
+    const updatedBlog = await blogService.updateBlogService(id, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: 'Blog updated successfully',
+      data: updatedBlog,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error updating blog',
+      error: error.message,
+    });
+  }
 };
 
-// @desc    Delete blog
-// @route   DELETE /api/blogs/:id
-// @access  Private/Author
+// Delete a blog
 const deleteBlog = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const authorId = req.user.id;
+  try {
+    const { id } = req.params;
+    const authorId = req.user.id;
 
-        // Check if blog exists and belongs to user
-        const existingBlog = await prisma.blog.findUnique({
-            where: { id }
-        });
-
-        if (!existingBlog) {
-            return res.status(404).json({
-                success: false,
-                message: 'Blog not found'
-            });
-        }
-
-        if (existingBlog.authorId !== authorId) {
-            return res.status(403).json({
-                success: false,
-                message: 'Not authorized to delete this blog'
-            });
-        }
-
-        await prisma.blog.delete({
-            where: { id }
-        });
-
-        res.json({
-            success: true,
-            message: 'Blog deleted successfully'
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting blog',
-            error: error.message
-        });
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Blog ID is required',
+      });
     }
+
+    const blog = await blogService.getBlogByIdService(id);
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: 'Blog not found',
+      });
+    }
+
+    if (blog.authorId !== authorId) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to delete this blog',
+      });
+    }
+
+    await blogService.deleteBlogService(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Blog deleted successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error deleting blog',
+      error: error.message,
+    });
+  }
 };
 
 module.exports = {
-    createBlog,
-    getBlogs,
-    getBlogById,
-    updateBlog,
-    deleteBlog
-}; 
+  createBlog,
+  getBlogs,
+  getBlogById,
+  updateBlog,
+  deleteBlog,
+};

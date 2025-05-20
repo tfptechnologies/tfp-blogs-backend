@@ -1,30 +1,47 @@
-const userModel = require("../models/user.model");
+const userModel = require('../models/user.model');
 
+// Register new user
+const registerUser = async (userData) => {
+  // Extra business logic can be added here if needed
+  return await userModel.createUser(userData);
+};
 
-const getAllusers = async ()=>{
+// Find user by email (for login, etc.)
+const findUserByEmail = async (email) => {
+  return await userModel.findUserByEmail(email);
+};
 
-    let users = await userModel.getAllUsersList();
+// Verify password
+const verifyPassword = async (inputPassword, hashedPassword) => {
+  return await userModel.verifyPassword(inputPassword, hashedPassword);
+};
 
-    return users;
+// Get user profile by ID
+const getUserProfile = async (userId) => {
+  return await userModel.getUserById(userId);
+};
 
-}
+// Update user profile
+const updateUser = async (userId, updateData) => {
+  return await userModel.updateUserProfile(userId, updateData);
+};
 
-const getUserById = async (id)=>{
+// Get all users (for admin etc.)
+const getAllUsers = async () => {
+  return await userModel.getAllUsers();
+};
 
-  let user = await userModel.getUserById(id)
-
-  return user;
-
-}
-
-
-const createUser = async (user)=>{
-  console.log("Service");
-    return await userModel.createUser(user);
-
-}
+// Soft delete user
+const deleteUser = async (userId) => {
+  return await userModel.softDeleteUser(userId);
+};
 
 module.exports = {
-  getAllusers,
-  createUser,
+  registerUser,
+  findUserByEmail,
+  verifyPassword,
+  getUserProfile,
+  updateUser,
+  getAllUsers,
+  deleteUser
 };

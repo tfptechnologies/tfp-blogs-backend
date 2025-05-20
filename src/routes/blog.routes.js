@@ -6,7 +6,7 @@ const {
     getBlogById, 
     updateBlog, 
     deleteBlog 
-} = require('../controllers/blog.controller');
+} = require('../controllers/blog.Controller');
 const validate = require('../middlewares/validate.middleware');
 const { createBlogSchema, updateBlogSchema } = require('../validators/blog.validator');
 const authMiddleware = require('../middlewares/auth.middleware');
