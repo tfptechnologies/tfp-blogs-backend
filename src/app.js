@@ -7,6 +7,8 @@ const errorLogger = require("./middlewares/error.middleware");
 app.use(express.json());
 
 app.use(textMiddleware);
+
 app.use("/api", routes);
+
 app.use(errorLogger);
 module.exports = app;

@@ -3,7 +3,7 @@ module.exports = (schemas) => {
     try {
       const validationSources = ["body", "query", "params"];
       const allErrors = [];
-
+      
       validationSources.forEach((key) => {
         if (schemas[key]) {
           const { error } = schemas[key].validate(req[key], { abortEarly: false });
