@@ -1,41 +1,42 @@
-// middlewares/validate.js
+const prisma = require("../prisma/client");
 
-module.exports = (schemas) => {
-  return (req, res, next) => {
-    try {
-      const sources = ["body", "query", "params"];
-      const errors = [];
+const getAllCategoriesList = async (filters = {}) => {
+  const { isActive, search } = filters;
 
-      sources.forEach((key) => {
-        if (schemas[key]) {
-          const { error } = schemas[key].validate(req[key], { abortEarly: false });
-          if (error) {
-            errors.push(
-              ...error.details.map((detail) => ({
-                location: key,
-                field: detail.path.join("."),
-                message: detail.message,
-              }))
-            );
-          }
-        }
-      });
+  return await prisma.category.findMany({
+    where: {
+      ...(isActive !== undefined && { isActive: isActive === "true" }),
+      ...(search && {
+        name: {
+          contains: search,
+          mode: "insensitive",
+        },
+      }),
+    },
+    orderBy: { name: "asc" },
+  });
+};
 
-      if (errors.length > 0) {
-        return res.status(400).json({
-          status: "error",
-          message: "Validation failed",
-          errors,
-        });
-      }
+const getCategoryById = async (id) => {
+  return await prisma.category.findUnique({ where: { id } });
+};
 
-      next();
-    } catch (err) {
-      console.error("Validation middleware error:", err);
-      return res.status(500).json({
-        status: "error",
-        message: "Internal server error during validation",
-      });
-    }
-  };
+const createCategory = async (data) => {
+  return await prisma.category.create({ data });
+};
+
+const updateCategory = async (id, data) => {
+  return await prisma.category.update({ where: { id }, data });
+};
+
+const deleteCategory = async (id) => {
+  return await prisma.category.delete({ where: { id } });
+};
+
+module.exports = {
+  getAllCategoriesList,
+  getCategoryById,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 };
