@@ -4,10 +4,11 @@ const tagController = require("../controllers/tag.controller");
 const validate = require("../middlewares/tag.middleware");
 const { getAllTagsValidator } = require("../validators/tag.validator");
 
-router.get("/", validate({ query: getAllTagsValidator }), tagController.getAllTags);
+router.get("/", tagController.getAllTags);
 router.get("/:id", tagController.getTagById);
 router.post("/", tagController.createTag);
 router.put("/:id", tagController.updateTag);
+
 router.delete("/:id", tagController.deleteTag);
 
 module.exports = router;

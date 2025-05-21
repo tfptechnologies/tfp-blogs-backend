@@ -43,10 +43,9 @@ exports.createTag = async (req, res) => {
     res.status(201).send(tag);
   } catch (error) {
     res.status(500).send({ message: "Internal Server Error", error });
-    console.log("duplicate value not enter")
+   
   }
 };
-
 
 // Update tag by ID
 exports.updateTag = async (req, res) => {
@@ -67,14 +66,15 @@ exports.updateTag = async (req, res) => {
   }
 };
 
-
 // Delete tag by ID
 exports.deleteTag = async (req, res) => {
   try {
     const deleted = await tagService.deleteTag(req.params.id);
 
     if (!deleted) {
-      return res.status(404).send({ message: "Tag not found or already deleted" });
+      return res
+        .status(404)
+        .send({ message: "Tag not found or already deleted" });
     }
 
     res.send({ message: "Tag deleted", data: deleted });
@@ -86,4 +86,3 @@ exports.deleteTag = async (req, res) => {
     res.status(500).send({ message: "Internal Server Error", error });
   }
 };
-

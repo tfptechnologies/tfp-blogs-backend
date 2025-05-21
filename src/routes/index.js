@@ -8,10 +8,8 @@ const categoryRoutes = require("../routes/category.routes");
 
 const router = express.Router();
 
-router.use("/auth", authRoutes);
-router.use("/user", userRoutes);
 
-router.use('/tags', tagRoutes);
+router.use('/tag', tagRoutes);
 router.use('/category',categoryRoutes);
 
 module.exports = router;

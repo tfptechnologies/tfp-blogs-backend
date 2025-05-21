@@ -13,12 +13,9 @@ app.use(express.json());
 // app.use(textMiddleware);
 
 app.use(core({origin:"http://localhost:5173", credentials:true}));
-// app.use("/api", routes);
 
-app.use("/categories", categoryRoutes); 
-app.use("/tags",tagRoutes);
 
-app.use('api/v1', routes);
+app.use('/api/v1', routes);
 
 app.use(errorLogger);
 module.exports = app;
