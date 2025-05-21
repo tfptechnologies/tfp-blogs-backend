@@ -1,4 +1,4 @@
-
+const Joi = require('joi');
 exports.getAllCategoriesValidator = Joi.object({
   isActive: Joi.boolean().optional(),
   search: Joi.string().optional(),

@@ -1,124 +1,178 @@
-
-
 generator client {
   provider = "prisma-client-js"
 }
-
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id         Int       @id @default(autoincrement())
-  fullName   String
+  id         String    @id @default(uuid())
+  name       String
   email      String    @unique
   password   String
-  image      String?   // Profile picture
+  imageId    String?   @unique // One-to-One Relation
   gender     String?
   dob        DateTime?
   phone      String?
-  isActive   Boolean   @default(true)
+  isActive   Boolean   @default(true) //For blocking User
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  deleted    DateTime  @deletedAt
-  occupation String
+  isDeleted  DateTime? //For permanently deleting user
+  occupation String?
+  role       String    @default("user")  //user,author,admin
 
-  
+  userImage Image?
+
+  posts    Blog[]      
+  comments Comment[] 
+  userLikedBlogs    UserLikedBlog[]
+  userDisLikedBlogs UserDisLikedBlog[]
+
+  @@map("users")
 }
 
 model Tag {
-  tagName String
-  id      Int
-  slug    String    @unique
-  isActive   Boolean   @default(true)
+  id       String  @id @default(uuid())
+  name     String  @unique
+  slug     String  @unique
+  isActive Boolean @default(true)
+  deleted   Boolean  @default(false) 
 
+  tagOnBlogs TagOnBlog[]
+
+  @@map("tags")
 }
 
 model Category {
-  name        String
-  id          Int
-  slug        String    @unique
-  isActive    Boolean   @default(true)
+  id       String  @id @default(uuid())
+  name     String  @unique
+  slug     String  @unique
+  isActive Boolean @default(true)
 
+  categoryOnBlogs CategoryOnBlog[]
+
+  @@map("categories")
 }
 
 model Blog {
-  id             Int       @id @default(autoincrement())
-  title          String?
-  slug           String    @unique
-  content        String
-  image          String?
-  metaTitle      String?
+  id              String   @id @default(uuid())
+  title           String   @unique
+  slug            String   @unique
+  content         String
+  imageId         String?  @unique
+  metaTitle       String?
   metaDescription String?
-  canonicalUrl   String?
-  author         User      @relation(fields: [authorId], references: [id])
-  authorId       Int
-  postedAt       DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  isPublished    Boolean   @default(false)
-  isDeleted      Boolean   @default(false)
-  isActive       Boolean   @default(true)
-  status         String    @default("draft") // e.g., draft, published, archived
-  readingTime    Int?      // estimated in minutes
-  excerpt        String?   // short summary or preview
-  comments       Comment[] // one-to-many with Comment 
-  
-  authorId       Int @unique
-  tagList        Tags[] // one-to-many with Tags
-  categoryList   Category[] // one-to-many with Category  
-  likes      Int       @default(0)
-  dislikes   Int       @default(0)
-  views      Int       @default(0)          
- 
+  canonicalUrl    String?
+  excerpt         String?
+  authorId        String
+  postedAt        DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  isPublished     Boolean  @default(false)
+  isDeleted       Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  status          String   @default("draft") // posted, pendnig, approved, rejected
+  readingTime     Int?
+  views           Int      @default(0)
+
+  //Relations
+  images  Image[]
+  author User   @relation(fields: [authorId], references: [id])
+
+  comments Comment[]
+
+  //many-to-many
+  userLikedBlogs    UserLikedBlog[]
+  userDisLikedBlogs UserDisLikedBlog[]
+  tagOnBlogs        TagOnBlog[]
+  categoryOnBlogs   CategoryOnBlog[]
+
+  @@map("blogs")
+}
+
+model TagOnBlog {
+  tagId  String
+  blogId String
+
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@id([tagId, blogId])
+  @@map("tag_on_post")
+}
+
+model CategoryOnBlog {
+  categoryId String
+  blogId     String
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  blog     Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, blogId])
+  @@map("category_on_post")
+}
+
+model UserLikedBlog {
+  userId String
+  blogId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@id([userId, blogId])
+  @@map("user_liked_blog")
+}
+
+model UserDisLikedBlog {
+  userId String
+  blogId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@id([userId, blogId])
+  @@map("user_disliked_blog")
 }
 
 model Comment {
-  commentId          Int       @id @default(autoincrement())
-  blogId      Int       @unique
-  blog        Blog      @relation(fields: [blogId], references: [id])
-  content     String?
-  isActive    Boolean   @default(true)
-  deleted     Boolean   @default(false)
-  isApproved  Boolean
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  userId    Int
-  user      User      @relation(fields: [userId], references: [id])
+  id         String   @id @default(uuid())
+  content    String
+  isActive   Boolean  @default(true)
+  isDeleted  Boolean  @default(false)
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  userId     String
+  blogId String
+  isReply Boolean @default(false)
+  replyId String?
 
+  replies Comment[] @relation("repliesOfComent")
+  comment Comment? @relation( "repliesOfComent",fields: [replyId], references: [id], onDelete: Cascade)
+//Relations
+  user       User     @relation(fields: [userId], references: [id])
+  blog   Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
   
+
+  @@map("comments")
 }
 
-model Subcomment {
-  commentId Int?
-  userId    Int?
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   Comment[] @relation("CommentReplies")
-  isActive    Boolean   @default(true)
-  deleted     Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  isApproved  Boolean
-  isPublished Boolean   @default(false)
-  blogId      Int?
 
-}
+model Image {
+  id         String   @id @default(uuid())
+  name       String?
+  mimeType   String
+  data       Bytes
+  url        String?
+  userId String? @unique
+  blogId String?
+  createdAt  DateTime @default(now())
+  uploadedAt DateTime @updatedAt
 
-model Author {
-  id         Int       @id @default(autoincrement())
-  fullName   String
-  email      String    @unique
-  password   String
-  image      String?   // Profile picture
-  gender     String?
-  dob        DateTime?
-  phone      String?
-  isActive   Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deleted    DateTime  @deletedAt
-  occupation String
+  type String?
+  user User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blog Blog?  @relation(fields: [blogId], references: [id], onDelete: Cascade)
 
+  @@map("images")
 }

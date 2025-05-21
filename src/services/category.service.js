@@ -2,6 +2,7 @@ const categoryModel = require("../models/category.model");
 
 const getAllCategories = async (filters) => {
   return await categoryModel.getAllCategoriesList(filters);
+  // if()
 };
 
 const getCategoryById = async (id) => {
