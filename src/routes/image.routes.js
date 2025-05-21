@@ -1,32 +1,31 @@
+// routes/image.routes.js
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const {
-  uploadImage,
-  getImage,
-  deleteImage
-} = require('../controllers/imageController');
-const protect = require('../middleware/auth');
+const imageController = require("../controllers/image.Controller");
 
-// Configure multer for memory storage
+// Use multer for file upload
 const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Not an image! Please upload an image.'), false);
-    }
-  }
-});
+const upload = multer({ storage });
 
 // Routes
-router.post('/', protect, upload.single('image'), uploadImage);
-router.get('/:id', getImage);
-router.delete('/:id', protect, deleteImage);
 
-module.exports = router; 
+// POST: Upload a new image
+router.post('/', upload.single('file'), imageController.createImage);
+
+// GET: Get all images
+router.get('/', imageController.getAllImages);
+
+// GET: Get image by ID
+router.get('/:id', imageController.getImageById);
+
+// GET: View image by unique URL
+router.get('/view/:url', imageController.viewImageByUrl);
+
+// PUT: Update image by ID
+router.put('/:id', upload.single('file'), imageController.updateImage);
+
+// DELETE: Delete image by ID
+router.delete('/:id', imageController.deleteImage);
+
+module.exports = router;

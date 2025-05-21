@@ -1,225 +1,130 @@
-const { PrismaClient } = require('@prisma/client');
-const asyncHandler = require('../utils/asyncHandler');
+const commentService = require('../services/comment.service');
 
-const prisma = new PrismaClient();
+//  Create a top-level comment
+exports.createComment = async (req, res) => {
+  try {
+    const { content, blogId } = req.body;
+    const userId = req.user?.id;
 
-// @desc    Create a new comment
-// @route   POST /api/comments
-// @access  Private
-const createComment = async (req, res) => {
-    try {
-        const { content, blogId } = req.body;
-        const userId = req.user.id;
-
-        const comment = await prisma.comment.create({
-            data: {
-                content,
-                blogId,
-                userId
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true
-                    }
-                }
-            }
-        });
-
-        res.status(201).json({
-            success: true,
-            message: 'Comment created successfully',
-            data: comment
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error creating comment',
-            error: error.message
-        });
+    // Validate inputs
+    if (!content || !blogId || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content, blogId, and userId are required.',
+      });
     }
-};
 
-// @desc    Get comments for a blog
-// @route   GET /api/comments/blog/:blogId
-// @access  Public
-const getComments = async (req, res) => {
-    try {
-        const { blogId } = req.params;
-        const comments = await prisma.comment.findMany({
-            where: { blogId },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true
-                    }
-                }
-            },
-            orderBy: {
-                createdAt: 'desc'
-            }
-        });
+    const comment = await commentService.createComment({ content, userId, blogId });
 
-        res.json({
-            success: true,
-            data: comments
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching comments',
-            error: error.message
-        });
-    }
-};
-
-// @desc    Update comment
-// @route   PUT /api/comments/:id
-// @access  Private
-const updateComment = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { content } = req.body;
-        const userId = req.user.id;
-
-        // Check if comment exists and belongs to user
-        const existingComment = await prisma.comment.findUnique({
-            where: { id }
-        });
-
-        if (!existingComment) {
-            return res.status(404).json({
-                success: false,
-                message: 'Comment not found'
-            });
-        }
-
-        if (existingComment.userId !== userId) {
-            return res.status(403).json({
-                success: false,
-                message: 'Not authorized to update this comment'
-            });
-        }
-
-        const updatedComment = await prisma.comment.update({
-            where: { id },
-            data: { content },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true
-                    }
-                }
-            }
-        });
-
-        res.json({
-            success: true,
-            message: 'Comment updated successfully',
-            data: updatedComment
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error updating comment',
-            error: error.message
-        });
-    }
-};
-
-// @desc    Delete comment
-// @route   DELETE /api/comments/:id
-// @access  Private
-const deleteComment = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const userId = req.user.id;
-
-        // Check if comment exists and belongs to user
-        const existingComment = await prisma.comment.findUnique({
-            where: { id }
-        });
-
-        if (!existingComment) {
-            return res.status(404).json({
-                success: false,
-                message: 'Comment not found'
-            });
-        }
-
-        if (existingComment.userId !== userId) {
-            return res.status(403).json({
-                success: false,
-                message: 'Not authorized to delete this comment'
-            });
-        }
-
-        await prisma.comment.delete({
-            where: { id }
-        });
-
-        res.json({
-            success: true,
-            message: 'Comment deleted successfully'
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting comment',
-            error: error.message
-        });
-    }
-};
-
-// @desc    Approve comment (Admin only)
-// @route   PUT /api/comments/:id/approve
-// @access  Private/Admin
-const approveComment = asyncHandler(async (req, res) => {
-  const comment = await prisma.comment.findUnique({
-    where: { id: req.params.id }
-  });
-
-  if (!comment) {
-    return res.status(404).json({
-      success: false,
-      message: 'Comment not found'
+    res.status(201).json({
+      success: true,
+      message: 'Comment created successfully',
+      data: comment,
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: `Server error: ${error.message}` });
   }
+};
 
-  const updatedComment = await prisma.comment.update({
-    where: { id: req.params.id },
-    data: { isApproved: true },
-    include: {
-      user: {
-        select: {
-          id: true,
-          fullName: true,
-          userImage: {
-            select: {
-              url: true
-            }
-          }
-        }
-      }
+//  Create a reply to a comment
+exports.createReply = async (req, res) => {
+  try {
+    const { content, blogId, replyId } = req.body;
+    const userId = req.user?.id;
+
+    // Validate inputs
+    if (!content || !blogId || !replyId || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content, blogId, replyId, and userId are required.',
+      });
     }
-  });
 
-  res.json({
-    success: true,
-    data: updatedComment
-  });
-});
+    const reply = await commentService.createCommentReply({
+      content,
+      userId,
+      blogId,
+      replyId,
+    });
 
-module.exports = {
-    createComment,
-    getComments,
-    updateComment,
-    deleteComment,
-    approveComment
-}; 
+    res.status(201).json({
+      success: true,
+      message: 'Reply created successfully',
+      data: reply,
+    });
+  } catch (error) {
+    const notFound = error.message.includes('Parent comment not found');
+    res.status(notFound ? 404 : 500).json({ success: false, message: error.message });
+  }
+};
+
+//  Get all comments and their replies for a blog
+exports.getCommentsByBlog = async (req, res) => {
+  try {
+    const { blogId } = req.params;
+
+    if (!blogId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Blog ID is required.',
+      });
+    }
+
+    const comments = await commentService.getCommentsWithRepliesByBlog(blogId);
+
+    res.status(200).json({
+      success: true,
+      data: comments,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: `Server error: ${error.message}` });
+  }
+};
+
+//  Get single comment by ID
+exports.getCommentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Comment ID is required.',
+      });
+    }
+
+    const comment = await commentService.getCommentById(id);
+
+    res.status(200).json({
+      success: true,
+      data: comment,
+    });
+  } catch (error) {
+    const notFound = error.message.includes('Comment not found');
+    res.status(notFound ? 404 : 500).json({ success: false, message: error.message });
+  }
+};
+
+//  Soft delete a comment
+exports.deleteComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Comment ID is required.',
+      });
+    }
+
+    await commentService.deleteComment(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Comment deleted successfully',
+    });
+  } catch (error) {
+    const notFound = error.message.includes('not found');
+    res.status(notFound ? 404 : 500).json({ success: false, message: error.message });
+  }
+};

@@ -1,5 +1,4 @@
-const express = require('express');
-const router = express.Router();
+const router = require('express').Router;
 const { 
     createBlog, 
     getBlogs, 
@@ -7,19 +6,14 @@ const {
     updateBlog, 
     deleteBlog 
 } = require('../controllers/blog.Controller');
-const validate = require('../middlewares/validate.middleware');
-const { createBlogSchema, updateBlogSchema } = require('../validators/blog.validator');
-const authMiddleware = require('../middlewares/auth.middleware');
 
-// Public routes
+
 router.get('/', getBlogs);
 router.get('/:id', getBlogById);
 
+router.post('/',  createBlog);
 
-// Protected routes
-router.get('/:slug', getBlog);
-router.post('/', authMiddleware, validate(createBlogSchema), createBlog);
-router.put('/:id', authMiddleware, validate(updateBlogSchema), updateBlog);
-router.delete('/:id', authMiddleware, deleteBlog);
+router.put('/:id',  updateBlog);
+router.delete('/:id',  deleteBlog);
 
 module.exports = router; 

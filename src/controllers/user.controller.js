@@ -1,36 +1,36 @@
 const userService = require('../services/user.service');
 
 // Register/Create a new user
-const registerUser = async (req, res) => {
-  try {
-    const user = await userService.registerUser(req.body);
-    return res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
-      data: user
-    });
-  } catch (error) {
-    if (error.message.includes('exists')) {
-      return res.status(409).json({ // Conflict
-        success: false,
-        message: 'User with this email already exists',
-        error: error.message
-      });
-    }
-    if (error.message.includes('required')) {
-      return res.status(400).json({ // Bad Request
-        success: false,
-        message: 'Missing required fields',
-        error: error.message
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error during user registration',
-      error: error.message
-    });
-  }
-};
+// const registerUser = async (req, res) => {
+//   try {
+//     const user = await userService.registerUser(req.body);
+//     return res.status(201).json({
+//       success: true,
+//       message: 'User registered successfully',
+//       data: user
+//     });
+//   } catch (error) {
+//     if (error.message.includes('exists')) {
+//       return res.status(409).json({ // Conflict
+//         success: false,
+//         message: 'User with this email already exists',
+//         error: error.message
+//       });
+//     }
+//     if (error.message.includes('required')) {
+//       return res.status(400).json({ // Bad Request
+//         success: false,
+//         message: 'Missing required fields',
+//         error: error.message
+//       });
+//     }
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Internal server error during user registration',
+//       error: error.message
+//     });
+//   }
+// };
 
 // Get user by ID
 const getUserById = async (req, res) => {
@@ -66,6 +66,7 @@ const getUserById = async (req, res) => {
 
 // Update user profile
 const updateUserProfile = async (req, res) => {
+  
   try {
     const updatedUser = await userService.updateUser(req.params.id, req.body);
     return res.status(200).json({
@@ -74,6 +75,7 @@ const updateUserProfile = async (req, res) => {
       data: updatedUser
     });
   } catch (error) {
+
     if (error.message.includes('required')) {
       return res.status(400).json({
         success: false,
@@ -81,6 +83,7 @@ const updateUserProfile = async (req, res) => {
         error: error.message
       });
     }
+
     if (error.message.includes('not found')) {
       return res.status(404).json({
         success: false,
@@ -88,6 +91,7 @@ const updateUserProfile = async (req, res) => {
         error: error.message
       });
     }
+
     return res.status(400).json({
       success: false,
       message: 'Failed to update user profile',
@@ -130,6 +134,7 @@ const deleteUser = async (req, res) => {
       message: 'User deleted successfully',
       data: deletedUser
     });
+
   } catch (error) {
     if (error.message.includes('required')) {
       return res.status(400).json({
@@ -138,6 +143,7 @@ const deleteUser = async (req, res) => {
         error: error.message
       });
     }
+
     if (error.message.includes('already deleted')) {
       return res.status(409).json({
         success: false,
@@ -145,6 +151,7 @@ const deleteUser = async (req, res) => {
         error: error.message
       });
     }
+
     if (error.message.includes('not found')) {
       return res.status(404).json({
         success: false,
@@ -152,6 +159,7 @@ const deleteUser = async (req, res) => {
         error: error.message
       });
     }
+
     return res.status(500).json({
       success: false,
       message: 'Internal server error deleting user',

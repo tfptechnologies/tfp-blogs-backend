@@ -1,21 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const {
-  registerUser,
-  loginUser,
+  
   getUserProfile,
   updateUserProfile,
   getUserById,
   deleteUser,
   getAllUsers
 } = require('../controllers/user.controller');
-const protect = require('../middlewares/auth.middleware');
-const authorize = require('../middlewares/role.Check');
 
 
-// Routes
-// router.post('/register', registerValidation, registerUser);
-// router.post('/login', loginValidation, loginUser);
+
 
 // getUserById
 router.get('/:id', getUserById);
@@ -23,10 +18,10 @@ router.get('/:id', getUserById);
 // deleteUser b?
 router.delete('/:id', deleteUser);
 
-router.get('/profile', protect, getUserProfile);
-router.put('/:id', protect, updateUserProfile);
-router.get('/', protect, authorize('admin'), getAllUsers);
-router.delete('/:id', protect, authorize('admin'), deleteUser);
+router.get('/profile',  getUserProfile);
+router.put('/:id',  updateUserProfile);
+router.get('/', getAllUsers);
+router.delete('/:id', deleteUser);
 
 
 
