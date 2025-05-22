@@ -1,29 +1,67 @@
 const tagModel = require("../models/tag.model");
 
-const getAllTags = async () => {
-  return await tagModel.getAllTagsList();
+const createTagService = async (data) => {
+  try {
+    return await tagModel.createTag(data);
+  } catch (error) {
+    throw new Error("Failed to create tag: " + error.message);
+  }
 };
 
-const getTagById = async (id) => {
-  return await tagModel.getTagById(id);
+const getAllTagsService = async () => {
+  try {
+    return await tagModel.getAllTags();
+  } catch (error) {
+    throw new Error("Failed to fetch tags");
+  }
 };
 
-const createTag = async (tag) => {
-  return await tagModel.createTag(tag);
+const getTagByIdService = async (id) => {
+  try {
+    return await tagModel.getTagById(id);
+  } catch (error) {
+    throw new Error("Tag not found");
+  }
 };
 
-const updateTag = async (id, data) => {
-  return await tagModel.updateTag(id, data);
+const getTagBySlugService = async (slug) => {
+  try {
+    return await tagModel.getTagBySlug(slug);
+  } catch (error) {
+    throw new Error("Tag not found");
+  }
 };
 
-const deleteTag = async (id) => {
-  return await tagModel.deleteTag(id);
+const updateTagService = async (id, data) => {
+  try {
+    return await tagModel.updateTag(id, data);
+  } catch (error) {
+    throw new Error("Failed to update tag");
+  }
+};
+
+const softDeleteTagService = async (id) => {
+  try {
+    return await tagModel.softDeleteTag(id);
+  } catch (error) {
+    throw new Error("Failed to soft delete tag");
+  }
+};
+
+const hardDeleteTagService = async (id) => {
+  try {
+    return await tagModel.hardDeleteTag(id);
+  } catch (error) {
+    throw new Error("Failed to hard delete tag");
+  }
 };
 
 module.exports = {
-  getAllTags,
-  getTagById,
-  createTag,
-  updateTag,
-  deleteTag,
+  createTagService,
+  getAllTagsService,
+  getTagByIdService,
+  getTagBySlugService,
+  updateTagService,
+  softDeleteTagService,
+  hardDeleteTagService,
 };

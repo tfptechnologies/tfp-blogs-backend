@@ -1,185 +1,52 @@
 const prisma = require("../prisma/client");
 
-// Get all tags 
-const getAllTagsList = async () => {
-  try {
-    const tags = await prisma.tag.findMany({ where: { deleted: false } });
-
-    return {
-      success: true,
-      message: "Tags fetched successfully",
-      data: tags,
-      statusCode: 200,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: "An error occurred while fetching tags",
-      error: error.message,
-      data: null,
-      statusCode: 500,
-    };
-  }
-};
-
-
-// Get tag by ID
-const getTagById = async (id) => {
-  try {
-    const tag = await prisma.tag.findUnique({ where: { id: id } });
-
-    if (!tag) {
-      return {
-        success: false,
-        message: "Tag not found",
-        data: null,
-        statusCode: 404,
-      };
-    }
-
-    return {
-      success: true,
-      message: "Tag fetched successfully",
-      data: tag,
-      statusCode: 200,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: "An error occurred while fetching the tag",
-      error: error.message,
-      data: null,
-      statusCode: 500,
-    };
-  }
-};
-
-// Create a new tag
+// Create Tag
 const createTag = async (tag) => {
-  try {
-    const createdTag = await prisma.tag.create({ data: tag });
-
-    return {
-      success: true,
-      message: "Tag created successfully",
-      data: createdTag,
-      statusCode: 201,
-    };
-  } catch (error) {
-
-    return {
-      success: false,
-      message: "An error occurred while creating the tag",
-      error: error.message,
-      data: null,
-      statusCode: 500,
-    };
-  }
+  return await prisma.tag.create({ data: { ...tag } });
 };
 
-
-// Update tag
-const updateTag = async (id, data) => {
-  try {
-    const tagId = id;
-
-    if (!tagId) {
-      return {
-        success: false,
-        message: "Invalid tag ID",
-        error: "ID must be a number",
-        data: null,
-        statusCode: 400,
-      };
-    }
-    const updated = await prisma.tag.update({
-      where: { id: tagId },
-      data,
-    });
-
-    return {
-      success: true,
-      message: "Tag updated successfully",
-      data: updated,
-      statusCode: 200,
-    };
-  } catch (error) {
-    if (error.code === "P2025") {
-      return {
-        success: false,
-        message: "Tag not found",
-        error: "No tag exists with the provided ID",
-        data: null,
-        statusCode: 404,
-      };
-    }
-    return {
-      success: false,
-      message: "An error occurred while updating the tag",
-      error: error.message,
-      data: null,
-      statusCode: 500,
-    };
-  }
+// Get All Tags (Only non-deleted ones)
+const getAllTags = async () => {
+  return await prisma.tag.findMany({ where: { deleted: false } });
 };
 
-
-
-// Soft-delete tag (set deleted: true)
-const deleteTag = async (id) => {
-  try {
-    const tagId = id;
-
-    if (!tagId) {
-      return {
-        success: false,
-        message: "Invalid tag ID",
-        error: "ID must be a number",
-        data: null,
-        statusCode: 400,
-      };
-    }
-
-    const deleted = await prisma.tag.update({
-      where: { id: tagId },
-      data: { deleted: true },
-    });
-
-    return {
-      success: true,
-      message: "Tag deleted successfully",
-      data: deleted,
-      statusCode: 200,
-    };
-  } catch (error) {
-    if (error.code === "P2025") {
-      return {
-        success: false,
-        message: "Tag not found",
-        error: "No tag exists with the provided ID",
-        data: null,
-        statusCode: 404,
-      };
-    }
-
-    console.error("Error in deleteTag:", error);
-
-    return {
-      success: false,
-      message: "An error occurred while deleting the tag",
-      error: error.message,
-      data: null,
-      statusCode: 500,
-    };
-  }
+// Get Tag by ID (only if not deleted)
+const getTagById = async (id) => {
+  return await prisma.tag.findFirst({ where: { id, deleted: false } });
 };
 
+// Get Tag by Slug (only if not deleted)
+const getTagBySlug = async (slug) => {
+  return await prisma.tag.findFirst({ where: { slug, deleted: false } });
+};
 
+// Update Tag
+const updateTag = async (id, tag) => {
+  return await prisma.tag.update({
+    where: { id },
+    data: { ...tag },
+  });
+};
+
+//  Soft Delete
+const softDeleteTag = async (id) => {
+  return await prisma.tag.update({
+    where: { id },
+    data: { deleted: true },
+  });
+};
+
+//  Hard Delete
+const hardDeleteTag = async (id) => {
+  return await prisma.tag.delete({ where: { id } });
+};
 
 module.exports = {
-  getAllTagsList,
-  getTagById,
   createTag,
+  getAllTags,
+  getTagById,
+  getTagBySlug,
   updateTag,
-  deleteTag,
+  softDeleteTag,
+  hardDeleteTag,
 };

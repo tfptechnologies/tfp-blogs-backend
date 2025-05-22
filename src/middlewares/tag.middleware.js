@@ -1,46 +1,18 @@
-module.exports = (schemas) => {
-  return (req, res, next) => {
-    try {
-      const validationSources = ["body", "query", "params"];
-      const allErrors = [];
+const { tagSchema } = require("../validators/tag.validator");
 
-      validationSources.forEach((key) => {
-        if (schemas[key]) {
-          const { error } = schemas[key].validate(req[key], {
-            abortEarly: false,
-          });
+const validateTag = (req, res, next) => {
+  const { error, value } = tagSchema.validate(req.body, { abortEarly: false });
 
-          if (error) {
-            allErrors.push(
-              ...error.details.map((err) => ({
-                field: err.path.join("."),
-                message: err.message,
-                location: key,
-              }))
-            );
-          }
-        }
-      });
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation error",
+      errors: error.details.map((err) => err.message),
+    });
+  }
 
-      if (allErrors.length > 0) {
-        return res.status(400).json({
-          status: "fail",
-          code: 400,
-          message: "Validation failed",
-          errors: allErrors,
-        });
-      }
-
-      next(); // Pass to the next middleware/handler
-    } catch (err) {
-      console.error(" Validation middleware error:", err);
-
-      return res.status(500).json({
-        status: "error",
-        code: 500,
-        message: "Something went wrong during validation",
-        error: process.env.NODE_ENV === "development" ? err.message : undefined,
-      });
-    }
-  };
+  req.body = value;
+  next();
 };
+
+module.exports = validateTag;

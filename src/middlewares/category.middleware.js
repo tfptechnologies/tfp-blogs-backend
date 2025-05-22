@@ -1,48 +1,18 @@
-// middlewares/validate.js
+const { categorySchema } = require("../validators/category.validator");
 
-module.exports = (schemas) => {
-  return (req, res, next) => {
-    try {
-      const sources = ["body", "query", "params"];
-      const errors = [];
+const validateCategory = (req, res, next) => {
+  const { error, value } = categorySchema.validate(req.body, { abortEarly: false });
 
-      sources.forEach((key) => {
-        if (schemas[key]) {
-          const { error } = schemas[key].validate(req[key], {
-            abortEarly: false,
-          });
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation error",
+      errors: error.details.map((err) => err.message),
+    });
+  }
 
-          if (error) {
-            errors.push(
-              ...error.details.map((detail) => ({
-                location: key,
-                field: detail.path.join("."),
-                message: detail.message,
-              }))
-            );
-          }
-        }
-      });
-
-      if (errors.length > 0) {
-        return res.status(400).json({
-          status: "fail",
-          code: 400,
-          message: "Validation failed",
-          errors,
-        });
-      }
-
-      next(); // Proceed if no validation errors
-    } catch (err) {
-      console.error(" Validation Middleware Error:", err);
-
-      return res.status(500).json({
-        status: "error",
-        code: 500,
-        message: "Internal server error during validation",
-        error: process.env.NODE_ENV === "development" ? err : undefined,
-      });
-    }
-  };
+  req.body = value; // Only validated and sanitized data moves forward
+  next();
 };
+
+module.exports = validateCategory;

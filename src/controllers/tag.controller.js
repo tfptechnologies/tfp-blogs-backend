@@ -1,88 +1,78 @@
 const tagService = require("../services/tag.service");
 
-// Get all tags (with optional filters later)
-exports.getAllTags = async (req, res) => {
+const createTagController = async (req, res) => {
   try {
-    const filters = req.query;
-    const tags = await tagService.getAllTags(filters);
-
-    if (!tags || tags.length === 0) {
-      return res.status(404).send({ message: "No tags found" });
-    }
-
-    res.send(tags);
+    const tag = await tagService.createTagService(req.body);
+    return res.status(201).json({ success: true, tag });
   } catch (error) {
-    res.status(500).send({ message: "Internal Server Error", error });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Get a single tag by ID
-exports.getTagById = async (req, res) => {
+const getAllTagsController = async (req, res) => {
   try {
-    const tag = await tagService.getTagById(req.params.id);
-
-    if (!tag) {
-      return res.status(404).send({ message: "Tag not found" });
-    }
-
-    res.send(tag);
+    const tags = await tagService.getAllTagsService();
+    return res.status(200).json({ success: true, tags });
   } catch (error) {
-    res.status(500).send({ message: "Internal Server Error", error });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Create a new tag
-exports.createTag = async (req, res) => {
+const getTagByIdController = async (req, res) => {
   try {
-    const tag = await tagService.createTag(req.body);
-
-    if (!tag) {
-      return res.status(400).send({ message: "Failed to create tag" });
-    }
-
-    res.status(201).send(tag);
+    const tag = await tagService.getTagByIdService(req.params.id);
+    return res.status(200).json({ success: true, tag });
   } catch (error) {
-    res.status(500).send({ message: "Internal Server Error", error });
-   
+    return res.status(404).json({ success: false, message: error.message });
   }
 };
 
-// Update tag by ID
-exports.updateTag = async (req, res) => {
+const getTagBySlugController = async (req, res) => {
   try {
-    const updated = await tagService.updateTag(req.params.id, req.body);
-
-    if (!updated) {
-      return res.status(404).send({ message: "Tag not found" });
-    }
-
-    res.send(updated);
+    const tag = await tagService.getTagBySlugService(req.params.slug);
+    return res.status(200).json({ success: true, tag });
   } catch (error) {
-    if (error.code === "P2025") {
-      return res.status(404).send({ message: "Tag not found" });
-    }
-
-    res.status(500).send({ message: "Internal Server Error", error });
+    return res.status(404).json({ success: false, message: error.message });
   }
 };
 
-// Delete tag by ID
-exports.deleteTag = async (req, res) => {
+const updateTagController = async (req, res) => {
   try {
-    const deleted = await tagService.deleteTag(req.params.id);
-
-    if (!deleted) {
-      return res
-        .status(404)
-        .send({ message: "Tag not found or already deleted" });
-    }
-
-    res.send({ message: "Tag deleted", data: deleted });
+    const tag = await tagService.updateTagService(req.params.id, req.body);
+    return res.status(200).json({ success: true, tag });
   } catch (error) {
-    if (error.code === "P2025") {
-      return res.status(404).send({ message: "Tag not found" });
-    }
-
-    res.status(500).send({ message: "Internal Server Error", error });
+    return res.status(500).json({ success: false, message: error.message });
   }
+};
+
+
+const softDeleteTagController = async (req, res) => {
+  try {
+    const tag = await tagService.softDeleteTagService(req.params.id);
+    return res.status(200).json({ success: true, message: "Tag soft deleted", tag });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const hardDeleteTagController = async (req, res) => {
+  try {
+    await tagService.hardDeleteTagService(req.params.id);
+    return res.status(200).json({ success: true, message: "Tag permanently deleted" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
+
+module.exports = {
+  createTagController,
+  getAllTagsController,
+  getTagByIdController,
+  getTagBySlugController,
+  updateTagController,
+  softDeleteTagController,
+   hardDeleteTagController,
 };
