@@ -40,21 +40,7 @@ const updateTagService = async (id, data) => {
   }
 };
 
-const softDeleteTagService = async (id) => {
-  try {
-    return await tagModel.softDeleteTag(id);
-  } catch (error) {
-    throw new Error("Failed to soft delete tag");
-  }
-};
 
-const hardDeleteTagService = async (id) => {
-  try {
-    return await tagModel.hardDeleteTag(id);
-  } catch (error) {
-    throw new Error("Failed to hard delete tag");
-  }
-};
 
 module.exports = {
   createTagService,
@@ -62,6 +48,4 @@ module.exports = {
   getTagByIdService,
   getTagBySlugService,
   updateTagService,
-  softDeleteTagService,
-  hardDeleteTagService,
 };

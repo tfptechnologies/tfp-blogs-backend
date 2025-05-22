@@ -28,18 +28,8 @@ const updateTag = async (id, tag) => {
   });
 };
 
-//  Soft Delete
-const softDeleteTag = async (id) => {
-  return await prisma.tag.update({
-    where: { id },
-    data: { deleted: true },
-  });
-};
 
-//  Hard Delete
-const hardDeleteTag = async (id) => {
-  return await prisma.tag.delete({ where: { id } });
-};
+
 
 module.exports = {
   createTag,
@@ -47,6 +37,4 @@ module.exports = {
   getTagById,
   getTagBySlug,
   updateTag,
-  softDeleteTag,
-  hardDeleteTag,
 };

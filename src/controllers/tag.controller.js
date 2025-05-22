@@ -1,5 +1,6 @@
 const tagService = require("../services/tag.service");
 
+//create tag controller
 const createTagController = async (req, res) => {
   try {
     const tag = await tagService.createTagService(req.body);
@@ -9,6 +10,7 @@ const createTagController = async (req, res) => {
   }
 };
 
+//get all tag controller
 const getAllTagsController = async (req, res) => {
   try {
     const tags = await tagService.getAllTagsService();
@@ -18,8 +20,10 @@ const getAllTagsController = async (req, res) => {
   }
 };
 
+//get tag by ID controller
 const getTagByIdController = async (req, res) => {
   try {
+    
     const tag = await tagService.getTagByIdService(req.params.id);
     return res.status(200).json({ success: true, tag });
   } catch (error) {
@@ -27,6 +31,7 @@ const getTagByIdController = async (req, res) => {
   }
 };
 
+//get data or tag by ID or Slug controller
 const getTagBySlugController = async (req, res) => {
   try {
     const tag = await tagService.getTagBySlugService(req.params.slug);
@@ -36,6 +41,7 @@ const getTagBySlugController = async (req, res) => {
   }
 };
 
+//update tag controller
 const updateTagController = async (req, res) => {
   try {
     const tag = await tagService.updateTagService(req.params.id, req.body);
@@ -46,26 +52,6 @@ const updateTagController = async (req, res) => {
 };
 
 
-const softDeleteTagController = async (req, res) => {
-  try {
-    const tag = await tagService.softDeleteTagService(req.params.id);
-    return res.status(200).json({ success: true, message: "Tag soft deleted", tag });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-const hardDeleteTagController = async (req, res) => {
-  try {
-    await tagService.hardDeleteTagService(req.params.id);
-    return res.status(200).json({ success: true, message: "Tag permanently deleted" });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-
-
 
 module.exports = {
   createTagController,
@@ -73,6 +59,4 @@ module.exports = {
   getTagByIdController,
   getTagBySlugController,
   updateTagController,
-  softDeleteTagController,
-   hardDeleteTagController,
 };

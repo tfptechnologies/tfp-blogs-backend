@@ -6,9 +6,7 @@ const {
   getAllTagsController,
   getTagByIdController,
   getTagBySlugController,
-  updateTagController,
-  softDeleteTagController,
-  hardDeleteTagController,
+  updateTagController
 } = require("../controllers/tag.controller.js");
 
 const validateTag = require("../middlewares/tag.middleware");
@@ -22,7 +20,4 @@ router.get("/slug/:slug", getTagBySlugController);
 router.get("/id/:id", getTagByIdController); // Changed from "/:id" to "/id/:id" to avoid route conflicts
 
 router.put("/:id", validateTag, updateTagController);
-router.patch("/soft-delete/:id", softDeleteTagController);
-router.delete("/hard-delete/:id", hardDeleteTagController);
-
 module.exports = router;
