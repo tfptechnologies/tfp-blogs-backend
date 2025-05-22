@@ -1,14 +1,20 @@
 const express = require("express");
 const core = require("cors");
-const categoryRoutes = require("./routes/category.routes");
-const tagRoutes = require("./routes/tag.routes");
+const path = require('path');
+
+const errorLogger = require("./middlewares/error.middleware");
 
 const app = express();
 const routes = require("./routes");
 // const textMiddleware = require("./middlewares/text.middleware");
-const errorLogger = require("./middlewares/error.middleware");
 
 app.use(express.json());
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+// use errorLogger middelwere
+app.use(errorLogger);
 
 // app.use(textMiddleware);
 

@@ -1,101 +1,127 @@
-const blogmodel = require('../models/blog.model');
+const blogModel = require('../models/blog.model');
+const { blog } = require('../prisma/client');
 
-// Create a new blog
-const createBlog = async (data) => {
+async function createBlog(data) {
   if (!data.title || !data.content || !data.authorId) {
     // 400 Bad Request
-    throw new Error('400: Missing required fields: title, content, and authorId are required');
+    const err = new Error('400: Missing required fields: title, content, and authorId are required');
+    err.statusCode = 400;
+    throw err;
   }
 
   try {
-    return await blogmodel.blogcreate(data);
+    const createdBlog = await blogModel.createBlog(data);
+    return createdBlog;
   } catch (error) {
-    // 500 Internal Server Error
-    throw new Error('500: Failed to create blog - ' + error.message);
+    const err = new Error('Failed to create blog: ' + error.message);
+    err.statusCode = 500;
+    throw err;
   }
-};
+}
 
-// Get all blogs
-const getAllBlogs = async () => {
+async function getBlogById(id) {
+  if (!id) {
+    // 400 Bad Request
+    const err = new Error('400: Blog ID is required');
+    err.statusCode = 400;
+    throw err;
+  }
+
   try {
-    const blogs = await blogmodel.blogfindAll();
+    const foundBlog = await blogModel.getBlogById(id);
+    if (!foundBlog) {
+      const err = new Error('404: Blog not found or has been deleted');
+      err.statusCode = 404;
+      throw err;
+    }
+    return foundBlog;
+  } catch (error) {
+    if (error.statusCode) throw error;
+    const err = new Error('Failed to get blog: ' + error.message);
+    err.statusCode = 500;
+    throw err;
+  }
+}
+
+async function updateBlog(id, data) {
+  if (!id) {
+    // 400 Bad Request
+    const err = new Error('400: Blog ID is required');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  try {
+    const existingBlog = await blogModel.getBlogById(id);
+    if (!existingBlog) {
+      const err = new Error('404: Blog not found or has been deleted');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const updatedBlog = await blogModel.updateBlog(id, data);
+    return updatedBlog;
+  } catch (error) {
+    if (error.statusCode) throw error;
+    const err = new Error('Failed to update blog: ' + error.message);
+    err.statusCode = 500;
+    throw err;
+  }
+}
+
+async function deleteBlog(id) {
+  if (!id) {
+    // 400 Bad Request
+    const err = new Error('400: Blog ID is required');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  try {
+    const existingBlog = await blogModel.getBlogById(id);
+    if (!existingBlog) {
+      const err = new Error('404: Blog not found or already deleted');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const deletedBlog = await blogModel.deleteBlog(id);
+    if (!deletedBlog) {
+      const err = new Error('Failed to delete blog');
+      err.statusCode = 500;
+      throw err;
+    }
+    return deletedBlog;
+  } catch (error) {
+    if (error.statusCode) throw error;
+    const err = new Error('Failed to delete blog: ' + error.message);
+    err.statusCode = 500;
+    throw err;
+  }
+}
+
+async function listBlogs(params) {
+  try {
+    const blogs = await blogModel.listBlogs(params);
     if (!blogs || blogs.length === 0) {
       // 404 Not Found
-      throw new Error('404: No blogs found');
+      const err = new Error('404: No blogs found');
+      err.statusCode = 404;
+      throw err;
     }
     return blogs;
   } catch (error) {
-    // 500 Internal Server Error
-    throw new Error('500: Failed to fetch blogs - ' + error.message);
+    if (error.statusCode) throw error;
+    const err = new Error('Failed to list blogs: ' + error.message);
+    err.statusCode = 500;
+    throw err;
   }
-};
-
-// Get blog by ID
-const getBlogById = async (id) => {
-  if (!id) {
-    // 400 Bad Request
-    throw new Error('400: Blog ID is required');
-  }
-
-  try {
-    const blog = await blogmodel.blogfindById(id);
-    if (!blog) {
-      // 404 Not Found
-      throw new Error('404: Blog not found');
-    }
-    return blog;
-  } catch (error) {
-    // 500 Internal Server Error
-    throw new Error('500: Failed to fetch blog - ' + error.message);
-  }
-};
-
-// Update blog
-const updateBlog = async (id, data) => {
-  if (!id) {
-    // 400 Bad Request
-    throw new Error('400: Blog ID is required');
-  }
-
-  try {
-    const existing = await blogmodel.blogfindExists(id);
-    if (!existing) {
-      // 404 Not Found
-      throw new Error('404: Blog not found');
-    }
-
-    return await blogmodel.blogupdate(id, data);
-  } catch (error) {
-    // 500 Internal Server Error
-    throw new Error('500: Failed to update blog - ' + error.message);
-  }
-};
-
-// Delete blog
-const deleteBlog = async (id) => {
-  if (!id) {
-    // 400 Bad Request
-    throw new Error('400: Blog ID is required');
-  }
-
-  try {
-    const existing = await blogmodel.blogfindExists(id);
-    if (!existing) {
-      // 404 Not Found
-      throw new Error('404: Blog not found');
-    }
-
-    return await blogmodel.blogdelete(id);
-  } catch (error) {
-    // 500 Internal Server Error
-    throw new Error('500: Failed to delete blog - ' + error.message);
-  }
-};
+}
 
 module.exports = {
   createBlog,
-  getAllBlogs,
   getBlogById,
   updateBlog,
   deleteBlog,
+  listBlogs,
 };

@@ -1,85 +1,142 @@
-const commentModel = require("../models/comment.model");
+const CommentModel = require('../models/comment.model');
 
-// Create top-level comment
-exports.createComment = async ({ content, userId, blogId }) => {
-  try {
+const CommentService = {
+  // Create comment or reply
+  async createComment(data) {
+    const { content, userId, blogId, isReply, replyId } = data;
+
     if (!content || !userId || !blogId) {
-      throw new Error('Missing required fields');
+      throw { code: 400, message: 'Missing required fields: content, userId, blogId' };
     }
 
-    return await commentModel.createComment({ content, userId, blogId });
-  } catch (error) {
-    throw new Error(`Failed to create comment: ${error.message}`);
-  }
-};
+    if (isReply && !replyId) {
+      throw { code: 400, message: 'Missing replyId for comment reply' };
+    }
 
-// Create reply to a comment
-exports.createCommentReply = async ({ content, userId, blogId, replyId }) => {
-  try {
+    try {
+      const comment = await CommentModel.create({
+        content,
+        userId,
+        blogId,
+        isReply: !!isReply,
+        replyId: replyId || null,
+      });
+      return comment;
+    } catch (err) {
+      console.error(err);
+      throw { code: 500, message: 'Failed to create comment' };
+    }
+  },
+
+  // Create reply to a comment
+  async createReply({ content, userId, blogId, replyId }) {
     if (!content || !userId || !blogId || !replyId) {
-      throw new Error('Missing required fields for reply');
+      throw { code: 400, message: 'Missing required fields: content, userId, blogId, replyId' };
     }
 
-    const parentComment = await commentModel.findById(replyId);
-    if (!parentComment) {
-      throw new Error('Parent comment not found');
+    try {
+      return await CommentModel.createReply({
+        content,
+        userId,
+        blogId,
+        replyId,
+      });
+    } catch (err) {
+      console.error(err);
+      throw { code: 500, message: 'Failed to create reply' };
     }
+  },
 
-    return await commentModel.createReply({ content, userId, blogId, replyId });
-  } catch (error) {
-    throw new Error(`Failed to create reply: ${error.message}`);
-  }
-};
+  // Get all comments for a blog
+  async getCommentsByBlog(blogId) {
+    if (!blogId) throw { code: 400, message: 'Blog ID is required' };
 
-// Get all comments with their replies for a blog
-exports.getCommentsWithRepliesByBlog = async (blogId) => {
-  try {
-    if (!blogId) throw new Error('Blog ID is required');
+    try {
+      return await CommentModel.findByBlogId(blogId);
+    } catch (err) {
+      console.error(err);
+      throw { code: 500, message: 'Failed to fetch comments' };
+    }
+  },
 
-    return await commentModel.findByBlog(blogId);
-  } catch (error) {
-    throw new Error(`Failed to fetch comments: ${error.message}`);
-  }
-};
+  // Get single comment by ID
+  async getCommentById(id) {
+    if (!id) throw { code: 400, message: 'Comment ID is required' };
 
-// Get single comment by ID
-exports.getCommentById = async (id) => {
-  try {
-    if (!id) throw new Error('Comment ID is required');
-
-    const comment = await commentModel.findById(id);
-    if (!comment) throw new Error('Comment not found');
+    const comment = await CommentModel.findById(id);
+    if (!comment) throw { code: 404, message: 'Comment not found' };
 
     return comment;
-  } catch (error) {
-    throw new Error(`Failed to get comment: ${error.message}`);
+  },
+
+  
+  // Soft delete
+  async softDeleteComment(id) {
+    if (!id) throw { code: 400, message: 'Comment ID is required' };
+
+    try {
+      return await CommentModel.softDelete(id);
+    } catch (err) {
+      console.error(err);
+      throw { code: 500, message: 'Failed to soft delete comment' };
+    }
+  },
+  
+  
+  // Approve or reject
+  async setCommentApproval(id, isApproved) {
+    if (!id) throw { code: 400, message: 'Comment ID is required' };
+    
+    try {
+      return await CommentModel.setApproval(id, isApproved);
+    } catch (err) {
+      console.error(err);
+      throw { code: 500, message: 'Failed to update approval status' };
+    }
+  },
+  
+  // Get replies for a comment
+  async getRepliesByCommentId(replyId) {
+    if (!replyId) throw { code: 400, message: 'Reply ID is required' };
+    
+    try {
+      return await CommentModel.getReplies(replyId);
+    } catch (err) {
+      console.error(err);
+      throw { code: 500, message: 'Failed to fetch replies' };
+    }
   }
 };
 
-// Update a comment
-// exports.updateComment = async (id, content) => {
-//   try {
-//     if (!id || !content) throw new Error('ID and content are required');
+module.exports = CommentService;
 
-//     const comment = await commentModel.findById(id);
-//     if (!comment || comment.isDeleted) throw new Error('Comment not found or already deleted');
 
-//     return await commentModel.update(id, { content });
-//   } catch (error) {
-//     throw new Error(`Failed to update comment: ${error.message}`);
-//   }
-// };
 
-// Soft delete a comment
-exports.deleteComment = async (id) => {
-  try {
-    if (!id) throw new Error('ID is required');
 
-    const comment = await commentModel.findById(id);
-    if (!comment || comment.isDeleted) throw new Error('Comment not found or already deleted');
 
-    return await commentModel.softDelete(id);
-  } catch (error) {
-    throw new Error(`Failed to delete comment: ${error.message}`);
-  }
-};
+
+
+
+// Update comment
+// async updateComment(id, updates) {
+  //   if (!id) throw { code: 400, message: 'Comment ID is required' };
+  
+  //   try {
+    //     const comment = await CommentModel.update(id, updates);
+    //     return comment;
+    //   } catch (err) {
+      //     console.error(err);
+      //     throw { code: 500, message: 'Failed to update comment' };
+      //   }
+      // },
+      // Hard delete
+      // async deleteComment(id) {
+      //   if (!id) throw { code: 400, message: 'Comment ID is required' };
+        
+      //   try {
+      //     return await CommentModel.delete(id);
+      //   } catch (err) {
+      //     console.error(err);
+      //     throw { code: 500, message: 'Failed to permanently delete comment' };
+      //   }
+      // },

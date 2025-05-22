@@ -1,23 +1,18 @@
+// controllers/blog.controller.js
 const blogService = require('../services/blog.service');
 
-// @desc    Create a new blog
-const createBlog = async (req, res) => {
+async function createBlog(req, res) {
   try {
-    const blogData = {
-      ...req.body,
-      authorId: req.user.id,
-    };
+    const data = req.body;
 
-    // Validate required fields explicitly
-    if (!blogData.title || !blogData.content) {
+    if (!data.title || !data.content) {
       return res.status(400).json({
         success: false,
         message: 'Missing required fields: title and content are required',
       });
     }
 
-    const blog = await blogService.createBlogService(blogData);
-
+    const blog = await blogService.createBlog(data);
     res.status(201).json({
       success: true,
       message: 'Blog created successfully',
@@ -30,37 +25,11 @@ const createBlog = async (req, res) => {
       error: error.message,
     });
   }
-};
+}
 
-// Get all blogs
-const getBlogs = async (req, res) => {
+async function getBlogById(req, res) {
   try {
-    const blogs = await blogService.getAllBlogsService();
-
-    if (!blogs || blogs.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No blogs found',
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: blogs,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error fetching blogs',
-      error: error.message,
-    });
-  }
-};
-
-// Get a single blog by ID
-const getBlogById = async (req, res) => {
-  try {
-    const { id } = req.params;
+    const id = req.params.id;
 
     if (!id) {
       return res.status(400).json({
@@ -69,8 +38,7 @@ const getBlogById = async (req, res) => {
       });
     }
 
-    const blog = await blogService.getBlogByIdService(id);
-
+    const blog = await blogService.getBlogById(id);
     if (!blog) {
       return res.status(404).json({
         success: false,
@@ -89,13 +57,13 @@ const getBlogById = async (req, res) => {
       error: error.message,
     });
   }
-};
+}
 
-// Update a blog
-const updateBlog = async (req, res) => {
+async function updateBlog(req, res) {
   try {
-    const { id } = req.params;
-    const authorId = req.user.id;
+    const id = req.params.id;
+    const authorId = req.user?.id; // Assuming user info is in req.user
+    const data = req.body;
 
     if (!id) {
       return res.status(400).json({
@@ -104,7 +72,7 @@ const updateBlog = async (req, res) => {
       });
     }
 
-    const blog = await blogService.getBlogByIdService(id);
+    const blog = await blogService.getBlogById(id);
     if (!blog) {
       return res.status(404).json({
         success: false,
@@ -119,8 +87,7 @@ const updateBlog = async (req, res) => {
       });
     }
 
-    const updatedBlog = await blogService.updateBlogService(id, req.body);
-
+    const updatedBlog = await blogService.updateBlog(id, data);
     res.status(200).json({
       success: true,
       message: 'Blog updated successfully',
@@ -133,13 +100,12 @@ const updateBlog = async (req, res) => {
       error: error.message,
     });
   }
-};
+}
 
-// Delete a blog
-const deleteBlog = async (req, res) => {
+async function deleteBlog(req, res) {
   try {
-    const { id } = req.params;
-    const authorId = req.user.id;
+    const id = req.params.id;
+    const authorId = req.user?.id; // Assuming user info is in req.user
 
     if (!id) {
       return res.status(400).json({
@@ -148,7 +114,7 @@ const deleteBlog = async (req, res) => {
       });
     }
 
-    const blog = await blogService.getBlogByIdService(id);
+    const blog = await blogService.getBlogById(id);
     if (!blog) {
       return res.status(404).json({
         success: false,
@@ -163,8 +129,7 @@ const deleteBlog = async (req, res) => {
       });
     }
 
-    await blogService.deleteBlogService(id);
-
+    await blogService.deleteBlog(id);
     res.status(200).json({
       success: true,
       message: 'Blog deleted successfully',
@@ -176,12 +141,36 @@ const deleteBlog = async (req, res) => {
       error: error.message,
     });
   }
-};
+}
+
+async function listBlogs(req, res) {
+  try {
+    const { skip, take, ...filters } = req.query;
+
+    const params = {
+      skip: skip ? parseInt(skip, 10) : 0,
+      take: take ? parseInt(take, 10) : 10,
+      where: filters || {},
+    };
+
+    const blogs = await blogService.listBlogs(params);
+    res.status(200).json({
+      success: true,
+      data: blogs,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error fetching blogs',
+      error: error.message,
+    });
+  }
+}
 
 module.exports = {
   createBlog,
-  getBlogs,
   getBlogById,
   updateBlog,
   deleteBlog,
+  listBlogs,
 };

@@ -1,47 +1,119 @@
-const userModel = require('../models/user.model');
+// services/user.service.js
+const UserModel = require('../models/user.model');
 
-// Register new user
-const registerUser = async (userData) => {
-  // Extra business logic can be added here if needed
-  return await userModel.createUser(userData);
-};
+async function createUser(data) {
+  try {
+    const existingUser = await UserModel.getUserByEmail(data.email);
+    if (existingUser) {
+      const error = new Error('Email already in use');
+      error.code = 409;
+      throw error;
+    }
+    const user = await UserModel.createUser(data);
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
 
-// Find user by email (for login, etc.)
-const findUserByEmail = async (email) => {
-  return await userModel.findUserByEmail(email);
-};
+async function getUserById(id) {
+  try {
+    if (!id) {
+      const error = new Error('User ID is required');
+      error.code = 400;
+      throw error;
+    }
+    const user = await UserModel.getUserById(id);
+    if (!user) {
+      const error = new Error('User not found');
+      error.code = 404;
+      throw error;
+    }
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
 
-// Verify password
-const verifyPassword = async (inputPassword, hashedPassword) => {
-  return await userModel.verifyPassword(inputPassword, hashedPassword);
-};
+async function getAllUsers() {
+  try {
+    const users = await UserModel.getAllUsers();
+    if (!users || users.length === 0) {
+      const error = new Error('No users found');
+      error.code = 404;
+      throw error;
+    }
+    return users;
+  } catch (error) {
+    throw error;
+  }
+}
 
-// Get user profile by ID
-const getUserProfile = async (userId) => {
-  return await userModel.getUserById(userId);
-};
+async function updateUser(id, data) {
+  try {
+    if (!id) {
+      const error = new Error('User ID is required');
+      error.code = 400;
+      throw error;
+    }
+    const user = await UserModel.getUserById(id);
+    if (!user) {
+      const error = new Error('User not found');
+      error.code = 404;
+      throw error;
+    }
+    const updatedUser = await UserModel.updateUser(id, data);
+    return updatedUser;
+  } catch (error) {
+    throw error;
+  }
+}
 
-// Update user profile
-const updateUser = async (userId, updateData) => {
-  return await userModel.updateUserProfile(userId, updateData);
-};
+async function softDeleteUser(id) {
+  try {
+    if (!id) {
+      const error = new Error('User ID is required');
+      error.code = 400;
+      throw error;
+    }
+    const user = await UserModel.getUserById(id);
+    if (!user) {
+      const error = new Error('User not found');
+      error.code = 404;
+      throw error;
+    }
+    const softDeletedUser = await UserModel.softDeleteUser(id);
+    return softDeletedUser;
+  } catch (error) {
+    throw error;
+  }
+}
 
-// Get all users (for admin etc.)
-const getAllUsers = async () => {
-  return await userModel.getAllUsers();
-};
-
-// Soft delete user
-const deleteUser = async (userId) => {
-  return await userModel.softDeleteUser(userId);
-};
+async function deleteUser(id) {
+  try {
+    if (!id) {
+      const error = new Error('User ID is required');
+      error.code = 400;
+      throw error;
+    }
+    const user = await UserModel.getUserById(id);
+    if (!user) {
+      const error = new Error('User not found');
+      error.code = 404;
+      throw error;
+    }
+    const deletedUser = await UserModel.deleteUser(id);
+    return deletedUser;
+  } catch (error) {
+    throw error;
+  }
+}
 
 module.exports = {
-  registerUser,
-  findUserByEmail,
-  verifyPassword,
-  getUserProfile,
-  updateUser,
+  createUser,
+  getUserById,
   getAllUsers,
+  updateUser,
+  softDeleteUser,
   deleteUser
 };

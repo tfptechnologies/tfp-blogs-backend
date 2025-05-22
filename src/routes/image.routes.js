@@ -1,31 +1,21 @@
-// routes/image.routes.js
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const imageController = require("../controllers/image.Controller");
+const imageController = require('../controllers/image.controller'); //  lowercase "controller"
+const upload = require('../middlewares/multer.middleware'); //  consistent file name
 
-// Use multer for file upload
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+// Upload a new image
+router.post('/', upload.single('image'), imageController.uplodeImage);
 
-// Routes
-
-// POST: Upload a new image
-router.post('/', upload.single('file'), imageController.createImage);
-
-// GET: Get all images
+// Get all images
 router.get('/', imageController.getAllImages);
 
-// GET: Get image by ID
+// Get image by ID
 router.get('/:id', imageController.getImageById);
 
-// GET: View image by unique URL
-router.get('/view/:url', imageController.viewImageByUrl);
+// Update image by ID
+router.put('/:id', upload.single('image'), imageController.updateImage);
 
-// PUT: Update image by ID
-router.put('/:id', upload.single('file'), imageController.updateImage);
-
-// DELETE: Delete image by ID
+// Delete image by ID
 router.delete('/:id', imageController.deleteImage);
 
 module.exports = router;
